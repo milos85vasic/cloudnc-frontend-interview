@@ -2,16 +2,16 @@
   "name": "frontend",
   "version": "0.0.1",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "prettier": "prettier",
+    "ng": "ng",    
     "backend.create": "docker run -p 3000:3000 --name cloudnc.backend cloudncfrontend/frontend-interview-backend &",
     "backend.start": "(yarn backend.create || true) && docker container start cloudnc.backend &",
     "backend.stop": "docker container stop cloudnc.backend",
-    "backend.destroy": "(yarn backend.stop || true) && docker container rm cloudnc.backend"
+    "backend.destroy": "(yarn backend.stop || true) && docker container rm cloudnc.backend",
+    "start": "yarn backend.start && echo 'Backend is up!' && ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "prettier": "prettier"
   },
   "private": true,
   "dependencies": {
