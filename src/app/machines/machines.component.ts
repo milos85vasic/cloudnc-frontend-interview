@@ -33,7 +33,7 @@ export class MachinesComponent implements OnInit {
   constructor(private machinesService: MachinesService) {}
 
   ngOnInit(): void {
-    
+    this.machinesService.getMachineStatusChanges$().subscribe();
     this.machines$ = this.machinesService.getAllCachedMachines$();
   }
 }
