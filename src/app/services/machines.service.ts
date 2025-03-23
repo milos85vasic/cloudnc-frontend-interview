@@ -20,12 +20,11 @@ export class MachinesService {
       .pipe(
         tap((event) => {
         
-          // Update the list of all events:
           const currentEvents = this.allEvents$.getValue();
           this.allEvents$.next([...currentEvents, event]);
 
-          // Fetch machine details if it's a new machine:
           const machineId = event.id;
+          
           if (!this.machinesCache$.getValue()[machineId]) {
             this.fetchMachineDetails(machineId).subscribe((machine) => {
               const currentCache = this.machinesCache$.getValue();
