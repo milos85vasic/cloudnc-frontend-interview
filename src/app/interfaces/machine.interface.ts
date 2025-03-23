@@ -14,5 +14,6 @@ export interface Machine {
 
 export interface MachineStatusFromWebSocket {
   id: uuid;
+  timestamp: string;
   status: MachineStatus;
 }

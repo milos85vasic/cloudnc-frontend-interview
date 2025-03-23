@@ -20,12 +20,19 @@ export class MachinesService {
   constructor(private socket: Socket, private httpClient: HttpClient) {}
 
   public getMachineStatusChanges$(): Observable<MachineStatusFromWebSocket[]> {
+    
     return this.socket
       .fromEvent<MachineStatusFromWebSocket, 'MACHINE_STATUS_CHANGES'>('MACHINE_STATUS_CHANGES')
       .pipe(
         tap((event) => {
+          
+          const eventWithTimestamp = {
+            ...event,
+            timestamp: new Date().toISOString(),
+          };
+
           const currentEvents = this.allEvents$.getValue();
-          const updatedEvents = [...currentEvents, event];
+          const updatedEvents = [...currentEvents, eventWithTimestamp];
           this.allEvents$.next(updatedEvents);
           localStorage.setItem('allEvents', JSON.stringify(updatedEvents));
 
@@ -34,11 +41,13 @@ export class MachinesService {
           const existingMachine = currentCache[machineId];
 
           if (!existingMachine || !existingMachine.name) {
+            
             this.fetchMachineDetails(machineId).subscribe((machine) => {
+              
               const updatedMachine = {
                 ...machine,
                 status: event.status,
-                statusChanges: [...(existingMachine?.statusChanges || []), event],
+                statusChanges: [...(existingMachine?.statusChanges || []), eventWithTimestamp],
               };
 
               const updatedCache = {
@@ -49,11 +58,13 @@ export class MachinesService {
               this.machinesCache$.next(updatedCache);
               localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
             });
+
           } else {
+
             const updatedMachine = {
               ...existingMachine,
               status: event.status,
-              statusChanges: [...(existingMachine.statusChanges || []), event],
+              statusChanges: [...(existingMachine.statusChanges || []), eventWithTimestamp],
             };
 
             const updatedCache = {
