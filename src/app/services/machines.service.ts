@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Socket } from 'ngx-socket-io';
-import { Observable, scan, mergeMap, tap, BehaviorSubject } from 'rxjs';
-import { Machine, MachineStatusFromWebSocket } from '../interfaces/machine.interface';
+import { Observable, map, scan, mergeMap, tap, BehaviorSubject } from 'rxjs';
+import { Machine, MachineStatusFromWebSocket } from '../interfaces/machine.interface'
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +40,12 @@ export class MachinesService {
 
   private fetchMachineDetails(machineId: string): Observable<Machine> {
     return this.httpClient.get<Machine>(`http://localhost:3000/machines/${machineId}`);
+  }
+
+  public getAllCachedMachines$(): Observable<Machine[]> {
+    return this.machinesCache$.pipe(
+      map((cache) => Object.values(cache))
+    );
   }
 
   public getAllEvents$(): Observable<MachineStatusFromWebSocket[]> {
