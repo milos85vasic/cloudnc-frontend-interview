@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Socket } from 'ngx-socket-io';
 import { Observable, map, scan, mergeMap, tap, BehaviorSubject } from 'rxjs';
-import { Machine, MachineStatusFromWebSocket } from '../interfaces/machine.interface'
+import { MachineStatusFromWebSocket, Machine } from '../interfaces/machine.interface'
 
 @Injectable({
   providedIn: 'root',
@@ -19,23 +19,28 @@ export class MachinesService {
       .fromEvent<MachineStatusFromWebSocket, 'MACHINE_STATUS_CHANGES'>('MACHINE_STATUS_CHANGES')
       .pipe(
         tap((event) => {
-        
+          
           const currentEvents = this.allEvents$.getValue();
           this.allEvents$.next([...currentEvents, event]);
 
           const machineId = event.id;
-          
-          if (!this.machinesCache$.getValue()[machineId]) {
-            this.fetchMachineDetails(machineId).subscribe((machine) => {
-              const currentCache = this.machinesCache$.getValue();
-              this.machinesCache$.next({ ...currentCache, [machineId]: machine });
-            });
-          }
-      }),
-      scan(
-        (statuses, status) => [...statuses, status], [] as MachineStatusFromWebSocket[]
-      )
-    );
+          const currentCache = this.machinesCache$.getValue();
+          const existingMachine = currentCache[machineId];
+
+          const updatedMachine = {
+            ...existingMachine,
+            status: event.status,
+            statusChanges: [...(existingMachine?.statusChanges || []), event], // Add the new event
+          };
+
+          this.machinesCache$.next({
+            ...currentCache,
+            [machineId]: updatedMachine,
+          });
+        }),
+        
+        scan((acc, event) => [...acc, event], [] as MachineStatusFromWebSocket[]) // Accumulate events into an array
+      );
   }
 
   private fetchMachineDetails(machineId: string): Observable<Machine> {
@@ -44,7 +49,7 @@ export class MachinesService {
 
   public getAllCachedMachines$(): Observable<Machine[]> {
     return this.machinesCache$.pipe(
-      map((cache) => Object.values(cache))
+      map((cache) => Object.values(cache)) // Convert the cache object to an array of machines
     );
   }
 
