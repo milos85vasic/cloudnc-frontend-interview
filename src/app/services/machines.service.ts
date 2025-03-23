@@ -24,7 +24,6 @@ export class MachinesService {
       .fromEvent<MachineStatusFromWebSocket, 'MACHINE_STATUS_CHANGES'>('MACHINE_STATUS_CHANGES')
       .pipe(
         tap((event) => {
-          
           const currentEvents = this.allEvents$.getValue();
           const updatedEvents = [...currentEvents, event];
           this.allEvents$.next(updatedEvents);
@@ -34,19 +33,37 @@ export class MachinesService {
           const currentCache = this.machinesCache$.getValue();
           const existingMachine = currentCache[machineId];
 
-          const updatedMachine = {
-            ...existingMachine,
-            status: event.status,
-            statusChanges: [...(existingMachine?.statusChanges || []), event],
-          };
+          if (!existingMachine || !existingMachine.name) {
+            this.fetchMachineDetails(machineId).subscribe((machine) => {
+              const updatedMachine = {
+                ...machine,
+                status: event.status,
+                statusChanges: [...(existingMachine?.statusChanges || []), event],
+              };
 
-          const updatedCache = {
-            ...currentCache,
-            [machineId]: updatedMachine,
-          };
+              const updatedCache = {
+                ...currentCache,
+                [machineId]: updatedMachine,
+              };
 
-          this.machinesCache$.next(updatedCache);
-          localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
+              this.machinesCache$.next(updatedCache);
+              localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
+            });
+          } else {
+            const updatedMachine = {
+              ...existingMachine,
+              status: event.status,
+              statusChanges: [...(existingMachine.statusChanges || []), event],
+            };
+
+            const updatedCache = {
+              ...currentCache,
+              [machineId]: updatedMachine,
+            };
+
+            this.machinesCache$.next(updatedCache);
+            localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
+          }
         }),
         scan((acc, event) => [...acc, event], [] as MachineStatusFromWebSocket[])
       );
@@ -75,9 +92,7 @@ export class MachinesService {
           return this.fetchMachineDetails(machineId).pipe(
             tap((machine) => {
               const currentCache = this.machinesCache$.getValue();
-              const updatedCache = { ...currentCache, [machineId]: machine };
-              this.machinesCache$.next(updatedCache);
-              localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
+              this.machinesCache$.next({ ...currentCache, [machineId]: machine });
             })
           );
         }
