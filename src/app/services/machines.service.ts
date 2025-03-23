@@ -9,8 +9,13 @@ import { MachineStatusFromWebSocket, Machine } from '../interfaces/machine.inter
 })
 export class MachinesService {
   
-  private allEvents$ = new BehaviorSubject<MachineStatusFromWebSocket[]>([]);
-  private machinesCache$ = new BehaviorSubject<{ [machineId: string]: Machine }>({});
+  private machinesCache$ = new BehaviorSubject<{ [machineId: string]: Machine }>(
+    JSON.parse(localStorage.getItem('machinesCache') || "{}") || {}
+  );
+
+  private allEvents$ = new BehaviorSubject<MachineStatusFromWebSocket[]>(
+    JSON.parse(localStorage.getItem('allEvents') || "[]") || []
+  );
 
   constructor(private socket: Socket, private httpClient: HttpClient) {}
 
@@ -21,7 +26,9 @@ export class MachinesService {
         tap((event) => {
           
           const currentEvents = this.allEvents$.getValue();
-          this.allEvents$.next([...currentEvents, event]);
+          const updatedEvents = [...currentEvents, event];
+          this.allEvents$.next(updatedEvents);
+          localStorage.setItem('allEvents', JSON.stringify(updatedEvents));
 
           const machineId = event.id;
           const currentCache = this.machinesCache$.getValue();
@@ -30,16 +37,18 @@ export class MachinesService {
           const updatedMachine = {
             ...existingMachine,
             status: event.status,
-            statusChanges: [...(existingMachine?.statusChanges || []), event], // Add the new event
+            statusChanges: [...(existingMachine?.statusChanges || []), event],
           };
 
-          this.machinesCache$.next({
+          const updatedCache = {
             ...currentCache,
             [machineId]: updatedMachine,
-          });
+          };
+
+          this.machinesCache$.next(updatedCache);
+          localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
         }),
-        
-        scan((acc, event) => [...acc, event], [] as MachineStatusFromWebSocket[]) // Accumulate events into an array
+        scan((acc, event) => [...acc, event], [] as MachineStatusFromWebSocket[])
       );
   }
 
@@ -49,7 +58,7 @@ export class MachinesService {
 
   public getAllCachedMachines$(): Observable<Machine[]> {
     return this.machinesCache$.pipe(
-      map((cache) => Object.values(cache)) // Convert the cache object to an array of machines
+      map((cache) => Object.values(cache))
     );
   }
 
@@ -66,7 +75,9 @@ export class MachinesService {
           return this.fetchMachineDetails(machineId).pipe(
             tap((machine) => {
               const currentCache = this.machinesCache$.getValue();
-              this.machinesCache$.next({ ...currentCache, [machineId]: machine });
+              const updatedCache = { ...currentCache, [machineId]: machine };
+              this.machinesCache$.next(updatedCache);
+              localStorage.setItem('machinesCache', JSON.stringify(updatedCache));
             })
           );
         }
