@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
-import { MachineStatus } from '../interfaces/machine.interface';
 import { MachineStatusComponent } from './machine-status/machine-status.component';
 import { MachinesService } from '../services/machines.service';
 import { Machine } from '../interfaces/machine.interface';
