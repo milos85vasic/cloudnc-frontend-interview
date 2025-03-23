@@ -15,6 +15,14 @@ export interface Machine {
 }
 
 /*
+  Extension:
+*/
+export interface MachineWithDefaults extends Machine {
+  statusChanges: MachineStatusFromWebSocket[];
+  status: MachineStatus;
+}
+
+/*
   When subscribing to the websocket and the event 'MACHINE_STATUS_CHANGES'
   you'll get events of the following type
 */

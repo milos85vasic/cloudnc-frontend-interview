@@ -1,7 +1,14 @@
 <mat-list>
   <mat-list-item *ngFor="let machine of machines$ | async">
-    <a mat-stroked-button [routerLink]="['machine-id-1']" matBadge="5" matBadgeColor="accent">Machine 1</a>
+    <a
+      mat-stroked-button
+      [routerLink]="[machine.id]"
+      matBadge="{{ machine.statusChanges.length }}"
+      matBadgeColor="accent"
+    >
+      {{ machine.name }}
+    </a>
 
-    <app-machine-status [status]="MachineStatus.ON"></app-machine-status>
+    <app-machine-status [status]="machine.status"></app-machine-status>
   </mat-list-item>
 </mat-list>

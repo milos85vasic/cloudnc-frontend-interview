@@ -4,11 +4,11 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { MachineStatus } from '../interfaces/machine.interface';
 import { MachineStatusComponent } from './machine-status/machine-status.component';
 import { MachinesService } from '../services/machines.service';
-import { Machine } from '../interfaces/machine.interface';
+import { MachineWithDefaults } from '../interfaces/machine.interface';
 
 @Component({
   selector: 'app-machines',
@@ -28,12 +28,20 @@ import { Machine } from '../interfaces/machine.interface';
 })
 export class MachinesComponent implements OnInit {
   public MachineStatus = MachineStatus;
-  public machines$!: Observable<Machine[]>;
+  public machines$!: Observable<MachineWithDefaults[]>;
 
   constructor(private machinesService: MachinesService) {}
 
   ngOnInit(): void {
     this.machinesService.getMachineStatusChanges$().subscribe();
-    this.machines$ = this.machinesService.getAllCachedMachines$();
+    this.machines$ = this.machinesService.getAllCachedMachines$().pipe(
+      map((machines) =>
+        machines.map((machine) => ({
+          ...machine,
+          statusChanges: [],
+          status: MachineStatus.OFF,
+        }))
+      )
+    );
   }
 }
